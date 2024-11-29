@@ -8,7 +8,6 @@ export async function GET() {
     const users = await response.users.getUserList({
       limit: 100,
     });
-    console.log(users);
 
     // Use an encryption key (in production, this should be in environment variables)
     const encryptionKey = "santa-secreto-con-los-garcias!!!"; // Must be 32 chars for AES-256
@@ -42,8 +41,7 @@ export async function GET() {
       iv: encryptedUsers[(index + 1) % encryptedUsers.length].iv, // Add IV to assignments
     }));
 
-    console.log(assignments);
-
+    console.log(`Assigned ${assignments.length} people`);
     return NextResponse.json({ assignments, success: true }, { status: 200 });
   } catch (error) {
     console.error("Error fetching users:", error);

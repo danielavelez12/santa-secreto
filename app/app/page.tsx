@@ -81,10 +81,10 @@ export default function Home() {
           </div>
 
           <h1 className="text-3xl font-bold mb-6 text-center">
-            Su persona asignada es{" "}
+            Su persona asignada es
             {recipient
-              ? recipient.charAt(0).toUpperCase() + recipient.slice(1)
-              : "Cargando..."}
+              ? " " + recipient.charAt(0).toUpperCase() + recipient.slice(1)
+              : "..."}
           </h1>
 
           <Card>
