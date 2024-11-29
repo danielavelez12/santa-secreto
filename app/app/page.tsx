@@ -20,6 +20,11 @@ interface Suggestion {
   price: number;
 }
 
+interface SuggestionsResponse {
+  suggestions: Suggestion[];
+  citations: Array<string>;
+}
+
 export default function Home() {
   const [recipient, setRecipient] = useState<string | null>(null);
   const { user } = useUser();
@@ -28,6 +33,7 @@ export default function Home() {
   const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [comment, setComment] = useState("");
+  const [citations, setCitations] = useState<Array<string>>([]);
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -92,8 +98,9 @@ export default function Home() {
           comment,
         }),
       });
-      const data = await response.json();
+      const data: SuggestionsResponse = await response.json();
       setSuggestions(data.suggestions);
+      setCitations(data.citations || []);
 
       setPreviousSuggestions((prev) => [
         ...prev,
@@ -109,7 +116,7 @@ export default function Home() {
   return (
     <>
       <SignedIn>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
           <div className="relative w-64 h-32 mx-auto mb-6">
             <Image
               src="/santa.gif"
@@ -168,10 +175,11 @@ export default function Home() {
                         ? suggestions.map((suggestion, index) => (
                             <div
                               key={index}
-                              className="p-4 rounded-lg bg-secondary space-y-2 opacity-0"
+                              className="p-4 rounded-lg bg-secondary space-y-2 opacity-0 break-words whitespace-normal"
                               style={{
                                 animation: `fadeSlideUp 0.6s ease-out forwards`,
                                 animationDelay: `${0.2 + index * 0.15}s`,
+                                maxWidth: "100%",
                               }}
                             >
                               <h3 className="font-semibold">
@@ -183,6 +191,35 @@ export default function Home() {
                             </div>
                           ))
                         : null}
+                      {suggestions.length > 0 && citations.length > 0 && (
+                        <div
+                          className="p-4 rounded-lg bg-secondary space-y-2 opacity-0"
+                          style={{
+                            animation: `fadeSlideUp 0.6s ease-out forwards`,
+                            animationDelay: `${
+                              0.2 + suggestions.length * 0.15
+                            }s`,
+                          }}
+                        >
+                          <h4 className="font-semibold text-sm">Fuentes:</h4>
+                          <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                            {citations.map((citation, index) => (
+                              <li key={index} className="break-all">
+                                {citation && (
+                                  <a
+                                    href={citation}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    {citation}
+                                  </a>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       <Button
                         className="w-full"
                         variant="secondary"

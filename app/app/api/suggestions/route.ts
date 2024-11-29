@@ -40,8 +40,12 @@ export async function POST(request: Request) {
       .replace(/(\d+),(\d+)/g, "$1$2")
       .trim();
     const parsedSuggestions = JSON.parse(cleanContent);
+    console.log(data.citations);
 
-    return NextResponse.json(parsedSuggestions);
+    return NextResponse.json({
+      ...parsedSuggestions,
+      citations: data.citations || [],
+    });
   } catch (error) {
     console.error("Error fetching suggestions:", error);
     return NextResponse.json(
