@@ -16,12 +16,12 @@ export const Snow = () => {
     };
 
     // Create initial snowflakes
-    setSnowflakes(Array.from({ length: 50 }, createSnowflake));
+    setSnowflakes(Array.from({ length: 15 }, createSnowflake));
 
     // Add new snowflakes periodically
     const interval = setInterval(() => {
-      setSnowflakes((prev) => [...prev.slice(-49), createSnowflake()]);
-    }, 200);
+      setSnowflakes((prev) => [...prev.slice(-14), createSnowflake()]);
+    }, 500);
 
     return () => clearInterval(interval);
   }, []);
@@ -36,9 +36,10 @@ export const Snow = () => {
             left: `${snowflake.left}%`,
             animation: `fall ${snowflake.animationDuration}s linear infinite`,
             transform: "translateZ(0)",
+            color: "white",
           }}
         >
-          ❄
+          &#10052;
         </div>
       ))}
       <style jsx>{`
