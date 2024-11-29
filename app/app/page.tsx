@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { createDecipheriv } from "crypto";
@@ -12,10 +13,21 @@ interface Assignment {
   // ... other assignment properties
 }
 
+interface Suggestion {
+  emoji: string;
+  title: string;
+  description: string;
+  price: number;
+}
+
 export default function Home() {
   const [recipient, setRecipient] = useState<string | null>(null);
   const { user } = useUser();
   const timeLeft = useCountdown(new Date("2024-12-24"));
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -66,6 +78,34 @@ export default function Home() {
     }
   }, [user]);
 
+  const fetchSuggestions = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/suggestions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: recipient,
+          previousSuggestions,
+          comment,
+        }),
+      });
+      const data = await response.json();
+      setSuggestions(data.suggestions);
+
+      setPreviousSuggestions((prev) => [
+        ...prev,
+        ...data.suggestions.map((s: Suggestion) => s.title),
+      ]);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <SignedIn>
@@ -87,24 +127,101 @@ export default function Home() {
               : "..."}
           </h1>
 
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4 text-center">
-                Cuenta Regresiva para Navidad
-              </h2>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                {Object.entries(timeLeft).map(([unit, value]) => (
-                  <div
-                    key={unit}
-                    className="bg-primary text-primary-foreground rounded-lg p-2"
-                  >
-                    <div className="text-2xl font-bold">{value as string}</div>
-                    <div className="text-[10px]">{unit as string}</div>
+          <div className="grid gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  {Object.entries(timeLeft).map(([unit, value]) => (
+                    <div
+                      key={unit}
+                      className="bg-secondary text-secondary-foreground rounded-lg p-2"
+                    >
+                      <div className="text-2xl font-bold">
+                        {value as string}
+                      </div>
+                      <div className="text-[10px]">{unit as string}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {recipient && (
+              <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-left">
+                    🎁 Sugerencias de regalo para{" "}
+                    {recipient.charAt(0).toUpperCase() + recipient.slice(1)}
+                  </h2>
+                  <div>
+                    <textarea
+                      className="w-full p-2 border rounded-md resize-none mb-4"
+                      placeholder="Añade un comentario opcional..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows={2}
+                    />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="suggestions-wrapper">
+                    <div className="grid gap-4">
+                      {suggestions.length > 0
+                        ? suggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              className="p-4 rounded-lg bg-secondary space-y-2 opacity-0"
+                              style={{
+                                animation: `fadeSlideUp 0.6s ease-out forwards`,
+                                animationDelay: `${0.2 + index * 0.15}s`,
+                              }}
+                            >
+                              <h3 className="font-semibold">
+                                {suggestion.emoji} {suggestion.title}
+                              </h3>
+                              <p className="text-sm">
+                                {suggestion.description}
+                              </p>
+                            </div>
+                          ))
+                        : null}
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={fetchSuggestions}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <svg
+                              className="animate-spin h-5 w-5"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Cargando sugerencias...
+                          </span>
+                        ) : (
+                          "✨ Refrescar Sugerencias ✨"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </SignedIn>
 
@@ -120,9 +237,11 @@ export default function Home() {
             />
           </div>
 
-          <h1 className="text-4xl font-bold">Santa Secreto</h1>
+          <h1 className="text-4xl font-bold">Amigo Secreto</h1>
 
-          <SignInButton mode="modal">Iniciar Sesión</SignInButton>
+          <SignInButton mode="modal">
+            <Button size="lg">Iniciar Sesión</Button>
+          </SignInButton>
         </div>
       </SignedOut>
     </>

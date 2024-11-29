@@ -1,5 +1,6 @@
 import { esES } from "@clerk/localizations";
 import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
+import { Snow } from "../components/Snow";
 import "./globals.css";
 
 const customLocalization = {
@@ -23,9 +24,10 @@ export default function RootLayout({
   return (
     <ClerkProvider localization={{ ...esES, ...customLocalization }}>
       <html lang="es">
-        <body>
+        <body className="min-h-screen bg-sky-50">
+          <Snow />
           <SignedIn>
-            <header className="flex justify-end p-4 bg-gray-100">
+            <header className="flex justify-end p-4 absolute w-full z-10">
               <UserButton
                 appearance={{
                   elements: {
@@ -37,7 +39,7 @@ export default function RootLayout({
             </header>
           </SignedIn>
 
-          <main className="p-4">{children}</main>
+          <main>{children}</main>
         </body>
       </html>
     </ClerkProvider>
