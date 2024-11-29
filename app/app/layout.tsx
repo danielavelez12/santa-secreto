@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <ClerkProvider localization={{ ...esES, ...customLocalization }}>
       <html lang="es">
-        <body className="min-h-screen bg-sky-50">
+        <body className="min-h-screen bg-sky-100">
           <Snow />
           <SignedIn>
             <header className="flex justify-end p-4 absolute w-full z-10">

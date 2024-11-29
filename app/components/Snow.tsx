@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export const Snow = () => {
@@ -11,16 +12,16 @@ export const Snow = () => {
       return {
         id: Math.random(),
         left: Math.random() * 100, // Random position from 0-100%
-        animationDuration: Math.random() * 100 + 10, // Changed to 10-25s duration
+        animationDuration: Math.random() * 15 + 25, // Changed to 25-40s duration (was 10-25s)
       };
     };
 
     // Create initial snowflakes
-    setSnowflakes(Array.from({ length: 15 }, createSnowflake));
+    setSnowflakes(Array.from({ length: 30 }, createSnowflake));
 
     // Add new snowflakes periodically
     const interval = setInterval(() => {
-      setSnowflakes((prev) => [...prev.slice(-14), createSnowflake()]);
+      setSnowflakes((prev) => [...prev.slice(-29), createSnowflake()]);
     }, 500);
 
     return () => clearInterval(interval);
@@ -31,15 +32,20 @@ export const Snow = () => {
       {snowflakes.map((snowflake) => (
         <div
           key={snowflake.id}
-          className="absolute top-0 text-white opacity-70"
+          className="absolute top-0 opacity-70"
           style={{
             left: `${snowflake.left}%`,
             animation: `fall ${snowflake.animationDuration}s linear infinite`,
             transform: "translateZ(0)",
-            color: "white",
           }}
         >
-          &#10052;
+          <Image
+            src="/snowflake.png"
+            alt="snowflake"
+            width={24}
+            height={24}
+            className="w-6 h-6"
+          />
         </div>
       ))}
       <style jsx>{`
