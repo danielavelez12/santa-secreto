@@ -2,7 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { createDecipheriv } from "crypto";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -34,6 +41,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [citations, setCitations] = useState<Array<string>>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isManuallyLoggedIn, setIsManuallyLoggedIn] = useState(false);
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -113,9 +124,52 @@ export default function Home() {
     }
   };
 
+  const handleManualLogin = async () => {
+    if (username && password) {
+      try {
+        const response = await fetch("/api/users");
+        const data = await response.json();
+
+        if (data.success && data.assignments) {
+          const userAssignment = data.assignments.find(
+            (assignment: Assignment) => assignment.username === username
+          );
+
+          if (userAssignment) {
+            const decryptedUsername = (() => {
+              try {
+                const decipher = createDecipheriv(
+                  "aes-256-cbc",
+                  "santa-secreto-con-los-garcias!!!",
+                  Buffer.from(userAssignment.iv, "hex")
+                );
+                let decrypted = decipher.update(
+                  userAssignment.recipientEncryptedUsername,
+                  "hex",
+                  "utf8"
+                );
+                decrypted += decipher.final("utf8");
+                return decrypted;
+              } catch (error) {
+                console.error("Decryption error:", error);
+                return null;
+              }
+            })();
+
+            setIsManuallyLoggedIn(true);
+            setShowLoginModal(false);
+            setRecipient(decryptedUsername || "Usuario no encontrado");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching assignment:", error);
+      }
+    }
+  };
+
   return (
     <>
-      <SignedIn>
+      {isManuallyLoggedIn || user ? (
         <div className="container mx-auto px-4 py-8 max-w-3xl">
           <div className="relative w-64 h-32 mx-auto mb-6">
             <Image
@@ -260,9 +314,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </SignedIn>
-
-      <SignedOut>
+      ) : (
         <div className="flex flex-col items-center justify-center gap-4 pt-20">
           <div className="relative w-64 h-64">
             <Image
@@ -279,8 +331,37 @@ export default function Home() {
           <SignInButton mode="modal">
             <Button size="lg">Iniciar Sesión</Button>
           </SignInButton>
+
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="text-gray-500 hover:underline text-sm mt-2"
+          >
+            No me está funcionando el login
+          </button>
+
+          <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+            <DialogContent className="w-[90%] max-w-[400px] rounded-lg p-4 md:w-full">
+              <DialogHeader>
+                <DialogTitle>Iniciar Sesión Manual</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4 px-2">
+                <Input
+                  placeholder="Usuario"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Button onClick={handleManualLogin}>Iniciar Sesión</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </SignedOut>
+      )}
     </>
   );
 }
