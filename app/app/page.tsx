@@ -17,6 +17,7 @@ import { useCountdown } from "../hooks/useCountdown";
 
 interface Assignment {
   userId: string;
+  username: string;
   // ... other assignment properties
 }
 
